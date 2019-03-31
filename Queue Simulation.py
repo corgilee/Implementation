@@ -2,14 +2,22 @@
 """
 Created on Sun Mar 31 12:52:08 2019
 
-@author: WZ009830
+
+病人每天从早上九点开始以均值为10每小时的泊松分布访问诊所，诊所接受任何在早上九点到下午四点之间的预约，医生需要把所有预约了的病人看完才能关门，医生给每个病人看病的时间服从5~20分钟的均匀分布，写代码对任意一天的情况进行仿真从而回答以下问题
+#1 医生在这一天当中一共会见多少病人？
+#2 在这一天当中会等待的病人总数？
+#3 平均等待时间
+#4 诊所关门时间
+
+
+
 """
 from numpy import random as rm
 import sys
 import pandas as pd
 import numpy as np
 
-#from 9am to 4pm, 7 hours, 4200 mins
+#from 9am to 4pm, 7 hours, 420 mins
 '''
 t
 Na: Total number of coming customers until t, Nd: Total number of leaving customers until t,
