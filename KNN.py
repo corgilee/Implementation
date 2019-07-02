@@ -1,131 +1,111 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
+import numpy as np
+import operator
 
-This is a temporary script file.
-"""
+##############################################
+## machine learning in action, p 23
 
-#https://www.geeksforgeeks.org/implementation-k-nearest-neighbors/
-
-file="C:/Users/c/Documents/Python Scripts/Fraud/Data/knn_test.txt"
-
-''''
-Height, Weight, Age, Class
-1.70, 65, 20, Programmer
-1.90, 85, 33, Builder
-1.78, 76, 31, Builder
-1.73, 74, 24, Programmer
-1.81, 75, 35, Builder
-1.73, 70, 75, Scientist
-1.80, 71, 63, Scientist
-1.75, 69, 25, Programmer
-'''''
+##############################################
+def createDataSet():
+    group = np.array([[1.0, 1.1], [1.0, 1.0], [0, 0], [0, 0.1]])
+    labels=['A','B','B','B']
+    return group, labels
 
 
-f=open(file,"r")
-lines=f.read().splitlines()
-f.close()
-
-
-#the first line is head
-# get all the feature names
-features=lines[0].split(',')[:-1] 
-items=[]
-
-for i in range(1,len(lines)):
-    #transverse every lines
-    line=lines[i].split(',')
-    itemFeatures={"class": line[-1]}
-    
-    # Iterate through the features
-    for j in range(len(features)):
-        
-        #Get the feature at index j
-        f=features[j]
-        
-        #Convert feature value to float
-        v=float(line[j])
-        
-        # Add feature value to dict
-        itemFeatures[f]=v
-    items.append(itemFeatures)
- 
-''''   
-items:
-    
-[{'class': ' Programmer', 'Height': 1.7, ' Weight': 65.0, ' Age': 20.0},
- {'class': ' Builder', 'Height': 1.9, ' Weight': 85.0, ' Age': 33.0},
- {'class': ' Builder', 'Height': 1.78, ' Weight': 76.0, ' Age': 31.0},
- {'class': ' Programmer', 'Height': 1.73, ' Weight': 74.0, ' Age': 24.0},
- {'class': ' Builder', 'Height': 1.81, ' Weight': 75.0, ' Age': 35.0},
- {'class': ' Scientist', 'Height': 1.73, ' Weight': 70.0, ' Age': 75.0},
- {'class': ' Scientist', 'Height': 1.8, ' Weight': 71.0, ' Age': 63.0},
- {'class': ' Programmer', 'Height': 1.75, ' Weight': 69.0, ' Age': 25.0}]
-'''''
-### Auxiliary Function ##### def EuclideanDistance(x,y):
-import math
-def distance(x,y,features):
-    S=0
-    for feature in features:
-        S+=math.pow(x[feature]-y[feature],2)
-    return math.sqrt(S)
-
-# use stack to save [distance, "label"]
-def UpdateNeighbors(neighbors, item, distance,k):
-    if len(neighbors)<k:
-        neighbors.append([distance,item['class']])
-        neighbors.sort()
-    else:
-        if neighbors[-1][0]>distance:
-            neighbors[-1]=[distance,item['class']]
-            neighbors.sort()
-    return neighbors
-
-def count_neighbor_class(neighbors,k):
-    count={}
+def classify0(inX, dataSet, labels, k):
+    '''
+    :param inX: input vector
+    :param dataSet: original dataset
+    :param labels: vector of labels
+    :param k: k
+    :return:
+    '''
+    dataSetSize=dataSet.shape[0]
+    #repeat in (row direction, col directions=1)
+    diffMat=np.tile(inX, (dataSetSize, 1)) - dataSet #diffrence  of the matrix
+    sqDiffMat = diffMat**2
+    sqDistances = sqDiffMat.sum(axis=1) #axis=1
+    distance=sqDistances**0.5
+    sortedDistIndicies=distance.argsort()
+    classCount={}
     for i in range(k):
-        if neighbors[i][1] not in count:
-            count[neighbors[i][1]]=1
-        else:
-            count[neighbors[i][1]]+=1
-    return count
+        voteIlabel=labels[sortedDistIndicies[i]] # get the labels from sorted index
+        classCount[voteIlabel]=classCount.get(voteIlabel,0)+1
+    sortedClassCount = sorted(classCount.items(),
+                              key=operator.itemgetter(1), reverse=True)
+    # print(classCount)
+    # print(sortedClassCount[0][0])
+    return sortedClassCount[0][0]
 
-def max_count(count):
-    maximum=-1
-    label=" "
-    for key in count.keys():
-        if count[key]>maximum:
-            maximum=count[key]
-            label=key
-    return label
+###### text record to numpy parsing code #########
+def file2matrix(filename):
+    fr = open(filename) # 'open' build-in function
+    numberOfLines = len(fr.readlines())
+    returnMat=np.zeros((numberOfLines,3)) #create numpy matrix to return
+    classLabelVector=[]
+
+    fr=open(filename)
+    index=0
+    for line in fr.readlines():
+        line = line.strip() # removing leading and trailing space in the string
+        listFromLine=line.split('\t') #to list
+        returnMat[index,:] = listFromLine[0:3] #there are 4 elements in each line
+        classLabelVector.append(listFromLine[-1])
+        index+=1
+
+    return returnMat,classLabelVector #return matrix and label list
+
+###### Data normalization code #########
+
+def autoNorm(dataSet):
+        minVals=dataSet.min(0) #along the row directions
+        maxVals=dataSet.max(0)
+        ranges=maxVals-minVals
+        normDataSet = np.zeros(dataSet.shape) #create a zero matrix with the shape of dataset
+        m=dataSet.shape[0] # number of rows
+        normDataSet = dataSet-np.tile(minVals,(m,1)) #scale the minVals along the axis directions
+        normDataSet = normDataSet/np.tile(ranges,(m,1))
+        return normDataSet, ranges, minVals
+
+def datingClassTest():
+    '''
+    use the first hoRatio of the datingDataMat as numTestVecs
+    :return:
+    '''
+    hoRatio=0.1
+    datingDataMat, datingLabels = file2matrix('datingTestSet.txt')
+    normMat, ranges, minVals = autoNorm(datingDataMat)
+    m=normMat.shape[0]
+    numTestVecs=int(m*hoRatio)
+    errorCount=0.0
+    for i in range(numTestVecs):
+        classifierResult=classify0(normMat[i,:],normMat[numTestVecs:m,:],\
+                                   datingLabels[numTestVecs:m],3)
+        print("the classifier came back with: {}, the real answer is: {}" \
+        .format(classifierResult, datingLabels[i]))
+        if (classifierResult != datingLabels[i]): errorCount += 1.0
+    print('the total error rate is: {}'.format(errorCount / float(numTestVecs)))
 
 
-### core function ####
-def knn(items,features,k, new):
-    neighbors=[]
-    for item in items:
-        dist=distance(item,new, features)
-        
-        neighbors=UpdateNeighbors(neighbors, item, dist,k)
-    count=count_neighbor_class(neighbors,k)
-    label=max_count(count)
-    return label
 
-  
-new={'Height': 1.3, ' Weight': 68.0, ' Age': 17.0}
-
-if __name__ == '__main__':
-    
-    print(knn(items,features,3,new))
-
-
-    
-
-
-        
+if __name__ == "__main__":
+    datingClassTest()
 
 
 
-    
-    
-        
+
+
+
+
+
+
+
+
+
+
+# if __name__ == "__main__":
+#     group, labels = createDataSet()
+#     print('The group is classified as ',classify0([0,0], group, labels, 3))
+
+
+
+
