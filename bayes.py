@@ -115,9 +115,36 @@ def testingNB():
     print('{}, classified as: {}'.format(testEntry, classifyNB(thisDoc, p0V, p1V, pAb)))
 
 
+
+def textParse(bigString):
+    import re
+    listOfTokens= re.split('\W+',bigString)
+    return [tok.lower() for tok in listOfTokens if len(tok)>2]
+
+def spamTest():
+    docList, classList, fullText=[],[],[]
+    for i in range(1,2):
+        wordList = textParse(open('spam/{}.txt'.format(i)).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+
+        wordList= textParse(open('ham/{}.txt'.format(i)).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+    vocabList = createVocabList(docList)
+    trainingSet = range(50)
+    testSet = []
+    for i in range(10):
+        randIndex = int(np.random.uniform(0,len(trainingSet)))
+
+
+    return wordList
+
 if __name__ =="__main__":
 
-    testingNB()
+    spamTest()
 
 
 
