@@ -43,7 +43,7 @@ def randCent(dataSet, k):
 
 def kMeans(dataSet, k ,distMeas=distEclud,createCent = randCent):
     m = dataSet.shape[0]
-    clusterAssment = np.mat(np.zeros((m, 2)))
+    clusterAssment = np.mat(np.zeros((m, 2))) # 1st col for index, 2nd col for mindist
     centroids = createCent(dataSet, k)
     clusterChanged = True
     while clusterChanged:
