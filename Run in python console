@@ -1,0 +1,30 @@
+
+
+Run in python console
+
+
+click "python console"
+
+
+open " pycharm_test.py" and check the function inside
+
+
+
+######  type in console #######
+
+from pycharm_test import *
+
+
+F1(3)
+
+F2(4)
+
+F3(4)
+
+################################
+
+There will be a columns at right showing the Special Variables
+
+
+
+
