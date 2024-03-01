@@ -45,6 +45,7 @@ class KMeans:
     def _assign_labels(self, X):
         # Calculate distances between data points and centroids
         distances = np.sqrt(((X - self.centroids[:, np.newaxis])**2).sum(axis=2))
+        print('distance', distances.shape)
 
         # Assign labels based on nearest centroid
         return np.argmin(distances, axis=0) # 在k个中心点中，找到最近的那个中心点的索引
