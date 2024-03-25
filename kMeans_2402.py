@@ -10,10 +10,6 @@ k 是自己指定的
 import numpy as np
 
 
-
-
-
-
 class KMeans:
     def __init__(self, n_clusters, max_iter=300, tol=1e-4):
         self.n_clusters = n_clusters
