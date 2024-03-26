@@ -1,60 +1,43 @@
-
-#from sklearn.datasets import make_classification
-
-
-# unsupervised learning
-# class knn , initilize the number of cluster, max_iter, tolerance
-# methods, fit (x), assign_labels
-
 import numpy.random as nd
 import numpy as np
+from collections import Counter
 
-class Kmeans:
-    def __init__(self,n_clusters=3, max_iter=100, tolerance=1e-4):
-        self.n_clusters=n_clusters
-        self.max_iter=max_iter
-        self.tolerance=tolerance
+import numpy as np
 
-    def fit(self,x):
-        # random select centroid
-        self.centroids=x[np.random.choice(x.shape[0],size=self.n_clusters)]
-        
-        for _ in range(self.max_iter):
-            new_label=self.assign_labels(x) #lables is a list of x.shape[0]
-            # calculate the new centroids
-            new_centroids=[]
-            for k in range(self.n_clusters):
-                new_centroids.append(x[new_label==k].mean(axis=0))
-            
-            # check the new_centroid and the existing centroid
-            if np.allclose(new_centroids,self.centroids,rtol=self.tolerance):
-                break
-            
-            self.centroids=new_centroids
+# True CTRs for each email version (unknown to the algorithm)
+true_ctrs = {'A': 0.1, 'B': 0.15, 'C': 0.2, 'D': 0.25}
 
-        #退出循环后，最后定义labels
-        self.labels=self.assign_labels(x)
+# Initialize counters for sends and clicks
+sends = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+clicks = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
 
-    def assign_labels(self, x):
-        # compare the distance between x and each centroids
-        dist=[]
-        for i in range(self.n_clusters):
-            c_dist=np.sum((x-self.centroids[i])**2,axis=1)
-            dist.append(c_dist)
+# Epsilon-Greedy parameters
+epsilon = 0.1
+n_iterations = 10000  # Total number of emails to send
 
-        labels=np.argmin(dist,axis=0)
-        return labels
 
-#---- test case -------
+for _ in range(n_iterations):
+    # explore or exploit
 
-x=nd.random(size=(100,2))
+    if nd.random()<epsilon: #explore
+        n=len(sends)
+        version=nd.choice(list(sends.keys()))
 
-model=Kmeans()
+    else:
+        #exploite,selected the version with highest ctr
+        version_ctr={ key:clicks[key]*1.0/sends[key] if sends[key]>0 else 0 for key in sends.keys() }
 
-model.fit(x)
-#print(model.labels)
-            
+        # find the version with highest ctr
+        version, ctr=max(version_ctr.items(),key=lambda x: x[1])
 
+        #print(version,ctr)
+
+    #simulate the results, with true ctr
+    sends[version]+=1
+    if nd.random()<true_ctrs[version]:
+        clicks[version]+=1
+
+print(version_ctr) 
 
 
 
