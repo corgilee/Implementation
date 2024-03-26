@@ -1,21 +1,61 @@
+
+#from sklearn.datasets import make_classification
+
+
+# unsupervised learning
+# class knn , initilize the number of cluster, max_iter, tolerance
+# methods, fit (x), assign_labels
+
+import numpy.random as nd
 import numpy as np
 
-from sklearn.datasets import make_classification
-import numpy as np
+class Kmeans:
+    def __init__(self,n_clusters=3, max_iter=100, tolerance=1e-4):
+        self.n_clusters=n_clusters
+        self.max_iter=max_iter
+        self.tolerance=tolerance
 
-# Generate a more complex dataset
-X, y = make_classification(n_samples=1000, n_features=20, n_classes=2, n_informative=15, n_redundant=5, random_state=42)
+    def fit(self,x):
+        # random select centroid
+        self.centroids=x[np.random.choice(x.shape[0],size=self.n_clusters)]
+        
+        for _ in range(self.max_iter):
+            new_label=self.assign_labels(x) #lables is a list of x.shape[0]
+            # calculate the new centroids
+            new_centroids=[]
+            for k in range(self.n_clusters):
+                new_centroids.append(x[new_label==k].mean(axis=0))
+            
+            # check the new_centroid and the existing centroid
+            if np.allclose(new_centroids,self.centroids,rtol=self.tolerance):
+                break
+            
+            self.centroids=new_centroids
+
+        #退出循环后，最后定义labels
+        self.labels=self.assign_labels(x)
+
+    def assign_labels(self, x):
+        # compare the distance between x and each centroids
+        dist=[]
+        for i in range(self.n_clusters):
+            c_dist=np.sum((x-self.centroids[i])**2,axis=1)
+            dist.append(c_dist)
+
+        labels=np.argmin(dist,axis=0)
+        return labels
+
+#---- test case -------
+
+x=nd.random(size=(100,2))
+
+model=Kmeans()
+
+model.fit(x)
+#print(model.labels)
+            
 
 
-# Splitting the dataset into training and testing sets
-split_ratio = 0.8  # 80% for training, 20% for testing
-split_index = int(X.shape[0] * split_ratio)
 
-X_train, X_test = X[:split_index], X[split_index:]
-y_train, y_test = y[:split_index], y[split_index:]
-
-print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
-
-print(y_test)
 
 

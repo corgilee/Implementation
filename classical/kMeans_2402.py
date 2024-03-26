@@ -6,7 +6,6 @@ The K-means clustering algorithm is a partitioning method that aims to divide a 
 k 是自己指定的
 '''
 
-
 import numpy as np
 
 
