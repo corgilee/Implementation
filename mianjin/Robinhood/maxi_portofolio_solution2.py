@@ -43,6 +43,10 @@ if __name__ == "__main__":
 
 def optimize_portfolio_with_fractionals(amount, b_vals, s_vals, counts):
     n = len(b_vals)
+    '''
+    Basically, you want to make every dollar you spent has the maximum return. 
+    You can make a data structure to do that. After the sort, get as many as shares you can including fractions
+    '''
     sorted_arrs = [(s_val/b_val, b_val, s_val, c) for b_val, s_val, c in zip(b_vals, s_vals, counts)]
     sorted_arrs.sort(key=lambda x: x[0], reverse=True)
     b_vals = [sorted_arrs[i][1] for i in range(n)]
