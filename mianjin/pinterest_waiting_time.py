@@ -1,0 +1,1 @@
+#https://leetcode.com/discuss/interview-question/1920662/Google-or-Phone-or-Calculate-Total-Wait-Time
