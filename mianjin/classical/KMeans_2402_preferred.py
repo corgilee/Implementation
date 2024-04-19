@@ -9,7 +9,7 @@ class KMeans:
     def fit(self, x):
         # 先 initiate 中心
         self.centroids= x[np.random.choice(x.shape[0],size=self.n_clusters)]
-        print(self.centroids)
+        #print(self.centroids)
 
         for _ in range(self.max_iter):
             # assign label
@@ -39,8 +39,17 @@ np.random.seed(0)
 x = np.random.randn(100, 2) # 100 points in 2D
 
 # Instantiate and fit KMeans
+
+kmeans = KMeans(n_clusters=2)
+kmeans.fit(x)
+print(kmeans.label)
+
+
 kmeans = KMeans(n_clusters=3)
 kmeans.fit(x)
+print(kmeans.label)
+
+
 
         
 # Get cluster centroids and labels
