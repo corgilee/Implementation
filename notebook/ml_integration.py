@@ -38,6 +38,18 @@ feature1=df.select_dtypes('float64').columns.tolist()
 feature2=df.select_dtypes(int).columns.tolist()
 num_features=feature1+feature2
 
+
+#---plot --- 
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sns.countplot(x='Category', hue='Target', data=df)
+plt.title('Count Plot of Categorical Feature by Binary Target')
+plt.xlabel('Category')
+plt.ylabel('Frequency')
+plt.legend(title='Target', loc='upper right')
+plt.show()
+
 # missing rate
 
 percent_missing = \
