@@ -163,6 +163,12 @@ print(f1_score(y_test, pred_test > selected_threshold))
 
 
 ##----- MLP --------
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset, TensorDataset
+
 X_train, X_test = torch.tensor(X_train, dtype=torch.float32), torch.tensor(X_test, dtype=torch.float32)
 y_train, y_test = torch.tensor(y_train, dtype=torch.long), torch.tensor(y_test, dtype=torch.long)
 
