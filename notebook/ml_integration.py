@@ -51,7 +51,7 @@ sum(percent_missing['missing_rate']>=50)/percent_missing.shape[0]
 miss_50_minus=percent_missing.loc[percent_missing.missing_rate<50,'columns'].to_list()
 df=df[miss_50_minus]
 
-##### impuation
+##### imputation
 #impute numerical variables with median
 for x in num_features:
     median_value=df[x].median()
@@ -93,3 +93,11 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_
 # validation data 也要分一下
 x_train,x_val,y_train,y_val=train_test_split(x_train,y_train,test_size=0.2,random_state=78)
 
+# Training
+import lightgbm as lgb
+
+lgb_model = lgb.LGBMClassifier(n_estimators=100,
+,max_depth=3,random_state=78,verbose=-1,subsample=0.8,colsample_bytree=0.8,min_child_samples=5)
+
+lgb_model.fit(x_train.values,y_train,eval_set=[(x_val.values,y_val)],eval_metric='average_precision',
+              categorical_feature=[23],callbacks=[lgb.early_stopping(10)])
