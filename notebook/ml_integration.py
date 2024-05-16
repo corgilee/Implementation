@@ -112,22 +112,8 @@ pred_test=lgb_model.predict_proba(x_test)[:,1]
 print(roc_auc_score(y_train,pred_train))
 print(average_precision_score(y_train,pred_train))
 
-from sklearn.model_selection import GridSearchCV
-# Define the parameter grid
-param_grid = {
-    'learning_rate': [0.01, 0.02,0.05],
-    'subsample': [0.8, 0.9]
-}
 
-# Set up GridSearchCV
-grid_search = GridSearchCV(estimator=lgb_model, param_grid=param_grid, scoring='average_precision', cv=3, verbose=1)
-
-#average_precision
-
-# Perform grid search
-grid_search.fit(x_train.values, y_train)
-
-# find the best threshold for best f1 score
+# Gridsearch (optional)
 from sklearn.model_selection import GridSearchCV
 # Define the parameter grid
 param_grid = {
