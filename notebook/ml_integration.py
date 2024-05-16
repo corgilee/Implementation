@@ -78,3 +78,18 @@ query_mean_dict=dict(zip(query_mean['query_text'],query_mean['has_product_click'
 df['query_text_encoding']=df['query_text'].map(query_mean_dict)
 
 
+#scaling
+from sklearn.preprocessing import StandardScaler
+
+#standard 
+scaler = StandardScaler()
+df_standardized = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+
+
+##Modeling
+#--- Split -----
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=78)
+# validation data 也要分一下
+x_train,x_val,y_train,y_val=train_test_split(x_train,y_train,test_size=0.2,random_state=78)
+
