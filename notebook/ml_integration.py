@@ -18,6 +18,7 @@
     2. model fit
     3. feature importance
     4. cross validation (optional)
+    5. resample the training data (downsample the negative sample, optional)
 '''
 
 import pandas as pd
@@ -101,3 +102,71 @@ lgb_model = lgb.LGBMClassifier(n_estimators=100,
 
 lgb_model.fit(x_train.values,y_train,eval_set=[(x_val.values,y_val)],eval_metric='average_precision',
               categorical_feature=[23],callbacks=[lgb.early_stopping(10)])
+
+
+# check performance 
+from sklearn.metrics import roc_auc_score,average_precision_score,f1_score,precision_score, recall_score
+pred_train=lgb_model.predict_proba(x_train)[:,1]
+pred_test=lgb_model.predict_proba(x_test)[:,1]
+
+print(roc_auc_score(y_train,pred_train))
+print(average_precision_score(y_train,pred_train))
+
+from sklearn.model_selection import GridSearchCV
+# Define the parameter grid
+param_grid = {
+    'learning_rate': [0.01, 0.02,0.05],
+    'subsample': [0.8, 0.9]
+}
+
+# Set up GridSearchCV
+grid_search = GridSearchCV(estimator=lgb_model, param_grid=param_grid, scoring='average_precision', cv=3, verbose=1)
+
+#average_precision
+
+# Perform grid search
+grid_search.fit(x_train.values, y_train)
+
+# find the best threshold for best f1 score
+from sklearn.model_selection import GridSearchCV
+# Define the parameter grid
+param_grid = {
+    'learning_rate': [0.01, 0.02,0.05],
+    'subsample': [0.8, 0.9]
+}
+
+# Set up GridSearchCV
+grid_search = GridSearchCV(estimator=lgb_model, param_grid=param_grid, scoring='average_precision', cv=3, verbose=1)
+
+# Perform grid search
+grid_search.fit(x_train.values, y_train)
+best_model=grid_search.best_estimator_ #show the best parameter of gridsearch
+pred_test=best_model.predict_proba(x_test)[:,1]
+
+# find the best threshold for f1 score
+thresholds = np.linspace(0, 1, 50)
+
+f_scores = []
+precisions = []
+recalls = []
+
+
+for threshold in thresholds:
+    f_scores.append(f1_score(y_train, pred_train > threshold))
+    precisions.append(precision_score(y_train,pred_train > threshold))
+    recalls.append(recall_score(y_train, pred_train > threshold))
+
+
+selected_threshold=thresholds[np.argmax(f_scores)]
+print(selected_threshold) # use the optimal threshold to be the cut point 
+
+### precision, recall, f1 in training
+print(precision_score(y_train, pred_train > selected_threshold))
+print(recall_score(y_train, pred_train > selected_threshold))
+print(f1_score(y_train, pred_train > selected_threshold))
+
+
+### precision, recall, f1 in testing
+print(precision_score(y_test, pred_test > selected_threshold))
+print(recall_score(y_test, pred_test > selected_threshold))
+print(f1_score(y_test, pred_test > selected_threshold))
