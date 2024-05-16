@@ -73,11 +73,15 @@ df[cat_features] = encoder.fit_transform(df[cat_features])
 df['cat1']=encoder.fit_transform(np.array(df['cat1']).reshape(-1,1))
 df['cat1']=df['cat1'].astype('category') # 一定要把他 astype 成为 'categorical'
 
-# target encoding
+# optino 2: target encoding
 query_mean=pd.DataFrame(df.groupby(['query_text'])['has_product_click'].mean()).reset_index()
 query_mean_dict=dict(zip(query_mean['query_text'],query_mean['has_product_click']))
 df['query_text_encoding']=df['query_text'].map(query_mean_dict)
 
+#option 3: one hot encoder (比较麻烦)
+from sklearn.preprocessing import OneHotEncoder
+encoder = OneHotEncoder(sparse=False, drop=None)
+df_encoded = encoder.fit_transform(df[['Color']])
 
 #scaling
 from sklearn.preprocessing import StandardScaler
@@ -156,3 +160,47 @@ print(f1_score(y_train, pred_train > selected_threshold))
 print(precision_score(y_test, pred_test > selected_threshold))
 print(recall_score(y_test, pred_test > selected_threshold))
 print(f1_score(y_test, pred_test > selected_threshold))
+
+
+##----- MLP --------
+X_train, X_test = torch.tensor(X_train, dtype=torch.float32), torch.tensor(X_test, dtype=torch.float32)
+y_train, y_test = torch.tensor(y_train, dtype=torch.long), torch.tensor(y_test, dtype=torch.long)
+
+# Create data loaders
+train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=64, shuffle=True)
+test_loader = DataLoader(TensorDataset(X_test, y_test), batch_size=64, shuffle=False)
+
+class NeuralNetwork(nn.Module):
+    def __init__(self):
+        super(NeuralNetwork, self).__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(n_features + len(categories), 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 2)  # Output layer for binary classification
+        )
+
+    def forward(self, x):
+        return self.layers(x)
+
+
+model = NeuralNetwork()
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+def train_model(num_epochs, model, loaders):
+    for epoch in range(num_epochs):
+        model.train()
+        for X_batch, y_batch in loaders['train']:
+            optimizer.zero_grad()
+            outputs = model(X_batch)
+            loss = criterion(outputs, y_batch)
+            loss.backward()
+            optimizer.step()
+        print(f'Epoch {epoch+1}, Loss: {loss.item()}')
+
+# Train the model
+train_model(10, model, {'train': train_loader})
