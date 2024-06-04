@@ -28,10 +28,10 @@ class KMeans:
     def _assign_labels(self,x):
         dists=[]
         for i in range(self.n_clusters):
-            dist=np.sqrt(np.sum((x-self.centroids[i])**2,axis=1))
+            dist=np.sqrt(np.sum((x-self.centroids[i])**2,axis=1)) #这里一定要有axis=1，因为x是multi_row, centroids 是一个点
             dists.append(dist)
 
-        res=np.argmin(dists,axis=0)
+        res=np.argmin(dists,axis=0) # 这里要有axis=0， dists has n_clusters rows
         return res
 
 
@@ -50,8 +50,6 @@ kmeans.fit(x)
 print(kmeans.label)
 
 
-
-        
 # Get cluster centroids and labels
 
 
