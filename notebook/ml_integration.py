@@ -90,10 +90,33 @@ query_mean=pd.DataFrame(df.groupby(['query_text'])['has_product_click'].mean()).
 query_mean_dict=dict(zip(query_mean['query_text'],query_mean['has_product_click']))
 df['query_text_encoding']=df['query_text'].map(query_mean_dict)
 
-#option 3: one hot encoder (比较麻烦)
+# option3, 用pd.get_dummies
+categorical_vars = ['home_ownership']
+df = pd.get_dummies(df, columns=categorical_vars, drop_first=True)
+new_categorical_vars=df.select_dtypes('object').columns.tolist()
+
+#option 4: one hot encoder (比较麻烦)
 from sklearn.preprocessing import OneHotEncoder
 encoder = OneHotEncoder(sparse=False, drop=None)
 df_encoded = encoder.fit_transform(df[['Color']])
+
+
+
+#------tfidf ------------
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Initialize the TfidfVectorizer
+tfidf_vectorizer = TfidfVectorizer()
+
+# Fit and transform the training data
+tfidf_matrix = tfidf_vectorizer.fit_transform(df['review'])
+
+# Convert the TF-IDF matrix to a dense array for easier manipulation (optional)
+tfidf_matrix_dense = tfidf_matrix.toarray()
+
+# Get the feature names (words) from the vectorizer
+feature_names = tfidf_vectorizer.get_feature_names_out()
+
 
 #scaling
 from sklearn.preprocessing import StandardScaler
@@ -118,7 +141,7 @@ lgb_model = lgb.LGBMClassifier(n_estimators=100,
 
 lgb_model.fit(x_train.values,y_train,eval_set=[(x_val.values,y_val)],eval_metric='average_precision',
               categorical_feature=[23],callbacks=[lgb.early_stopping(10)])
-
+#eval_metrics: ['AUC','ndcg']
 
 # check performance 
 from sklearn.metrics import roc_auc_score,average_precision_score,f1_score,precision_score, recall_score
@@ -139,6 +162,7 @@ param_grid = {
 
 # Set up GridSearchCV
 grid_search = GridSearchCV(estimator=lgb_model, param_grid=param_grid, scoring='average_precision', cv=3, verbose=1)
+
 
 # Perform grid search
 grid_search.fit(x_train.values, y_train)
@@ -192,13 +216,14 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(n_features + len(categories), 128),
+            nn.Linear(n_features + n_categories, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
-            nn.Linear(32, 2)  # Output layer for binary classification
+            nn.Linear(32, 1),  # Output layer for binary classification with a single output neuron
+            nn.Sigmoid()       # Sigmoid activation function for the final output
         )
 
     def forward(self, x):
