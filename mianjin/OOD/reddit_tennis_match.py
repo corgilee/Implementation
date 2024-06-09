@@ -54,7 +54,7 @@ class Game:
         elif p2_points>=4 and p2_points-2>=p1_points:
             return self.player2
         else:
-            return None
+            return
 
 
 #-------------------------------------
