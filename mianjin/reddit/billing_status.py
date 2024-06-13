@@ -10,8 +10,13 @@ class BillingStatus:
     
     def apply_transaction(self, transaction, monetary_columns):
         for col in monetary_columns:
-            if col in transaction:
-                setattr(self, col, getattr(self, col) + transaction[col])
+            if col=='ad_delivery_pennies':
+                self.ad_delivery_pennies+=transaction[col]
+            if col=='payment_pennies':
+                self.payment_pennies+=transaction[col]
+            # 这个是高级写法
+            # if col in transaction:
+            #     setattr(self, col, getattr(self, col) + transaction[col]) 
     
     def __repr__(self):
         return f"BillingStatus(ad_delivery_pennies={self.ad_delivery_pennies}, payment_pennies={self.payment_pennies})"
@@ -22,7 +27,7 @@ def process_transactions(transactions, monetary_columns):
     for transaction in transactions.values():
         user_id = transaction['user_id']
         if user_id not in user_billing_status:
-            user_billing_status[user_id] = BillingStatus()
+            user_billing_status[user_id] = BillingStatus() #每一个人都对应一个class，这样好管理
         
         user_billing_status[user_id].apply_transaction(transaction, monetary_columns)
     
@@ -41,7 +46,7 @@ user_billing_status = process_transactions(transactions, monetary_columns)
 print(user_billing_status)
 
 
-# part2 Handling Overwrite Transactions
+# part2 Handling Overwrite Transactions， overwrite 是 覆盖的意思
 class BillingStatus:
     def __init__(self):
         self.ad_delivery_pennies = 0
@@ -49,11 +54,21 @@ class BillingStatus:
     
     def apply_transaction(self, transaction, monetary_columns):
         for col in monetary_columns:
-            if col in transaction:
-                if transaction.get('overwrite', False):
-                    setattr(self, col, transaction[col])
+            if col=='ad_delivery_pennies':
+                if transaction.get('overwrite',False):
+                    self.ad_delivery_pennies=transaction[col]
                 else:
-                    setattr(self, col, getattr(self, col) + transaction[col])
+                    self.ad_delivery_pennies+=transaction[col]
+            if col=='payment_pennies':
+                if transaction.get('overwrite',False):
+                    self.payment_pennies=transaction[col]
+                else:
+                    self.payment_pennies+=transaction[col]
+            # if col in transaction:
+            #     if transaction.get('overwrite', False):
+            #         setattr(self, col, transaction[col])
+            #     else:
+            #         setattr(self, col, getattr(self, col) + transaction[col])
     
     def __repr__(self):
         return f"BillingStatus(ad_delivery_pennies={self.ad_delivery_pennies}, payment_pennies={self.payment_pennies})"

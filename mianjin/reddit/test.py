@@ -1,5 +1,9 @@
-'''
-https://www.1point3acres.com/bbs/thread-1042581-1-1.html
-'''
 
+import numpy as np
+from scipy.special import softmax 
+
+# Example usage
+v2 = [ 0.3, -1.4,  0.8,  0.1,  1.7]
+p2 = softmax(v2)
+print(p2)
 
