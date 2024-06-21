@@ -1,20 +1,20 @@
 def justify_text(sentence, n, m):
     words = sentence.split()
     lines = [[] for _ in range(n)]
-    current_line = 0
+    current_row_index = 0
     current_length = 0
 
     # Distribute words to lines
     for word in words:
-        if current_length + len(word) + len(lines[current_line])-1 <= m:
-            #len(lines[current_line])-1 我理解是有n个单词，对应n-1个空格
-            lines[current_line].append(word)
+        if current_length + len(word) + len(lines[current_row_index])-1 <= m:
+            #len(lines[current_row_index])-1 我理解是有n个单词，对应n-1个空格
+            lines[current_row_index].append(word)
             current_length += len(word)
         else:
-            current_line += 1
-            if current_line >= n:
+            current_row_index += 1
+            if current_row_index >= n:
                 raise ValueError("The given sentence cannot be justified into the specified number of lines and length.")
-            lines[current_line].append(word)
+            lines[current_row_index].append(word)
             current_length = len(word)
 
     # Justify each line
