@@ -33,6 +33,19 @@ def smallest_sum_index(arr1, arr2, target):
 
     return res if found else -1
 
+# 如果要define bisect_left:
+def bisect_left(arr, target):
+    left, right = 0, len(arr)
+    
+    while left < right:
+        mid = (left + right) // 2
+        if arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid
+    
+    return left
+
 assert smallest_sum_index([1,3,5], [2,4], 7) == 3
 assert smallest_sum_index([1,3,5], [2,4], 9) == 5
 assert smallest_sum_index([1,3,5], [2,4], 10) == -1
