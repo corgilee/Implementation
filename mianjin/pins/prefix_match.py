@@ -1,7 +1,7 @@
 '''
 find index of a given prefix in a sorted ‍‌‌‌‍‍‌‍‌‌‌‍‍‍‌‌‌‌array. ['ab', 'app', 'apple'], prefix = 'ap', return 1
 我猜是返回第一个含有指定prefix 的
-这里可以用 str.startwith("xx")
+这里可以用 str.startswith("xx")
 '''
 
 # 冷知识，string 是可以用来比大小的
