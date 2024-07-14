@@ -36,6 +36,9 @@ In this problem, the input provided to us is "1211" and our goal is to return "2
 * 有 memo, O(n^2),because for each of the n positions, it processes substrings in 
 O(n) time, leveraging memoization to avoid redundant computations
 * 没有memo，O(2^n) due to the exponential number of possible substrings
+
+当时跟面试官确认了位数可以是多个digit但是数字只能是1个digit（例如753可以表示75个3但不能表示7个53），然后考虑了digit是0的情况和最后只剩一位digit的情况，其他还有什么edge case我暂时想不出来了...
+
 '''
 
 from collections import defaultdict
