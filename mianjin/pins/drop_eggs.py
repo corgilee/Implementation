@@ -1,6 +1,7 @@
 '''
 https://www.cnblogs.com/labuladong/p/13937987.html
 
+有一个概念很重要，无论有几个鸡蛋，测试floor[0,n] 和 floor[base,base+n] 的次数是一样的。
 '''
 
 # option 1: dp, dp[k][n] means the necessary steps with current k eggs and n floors
@@ -19,7 +20,7 @@ class Solution:
             res = float('INF')
             # 穷举所有可能的选择
             for i in range(1, N + 1):
-                res = min(res, max(dp(K, N - i), dp(K - 1, i - 1)) + 1 )
+                res = min(res, max(dp(K, N - i), dp(K - 1, i - 1)) + 1 ) # “+1” 表示当前这次操作
             # 记入备忘录
             memo[(K, N)] = res
             return res
