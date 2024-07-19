@@ -1,3 +1,8 @@
+'''
+大概一共有 depth = log(k), 每一层在merge的时候大概有 k 个 array，然后array 的size 是n
+所以 T 大约是 O(kn*log(k))
+'''
+
 class Solution:
     def mergeKArrays(self, arrays):
         # Helper function to merge two sorted arrays

@@ -18,7 +18,7 @@ class Solution:
                 return memo[(K, N)]
 
             res = float('INF')
-            # 穷举所有可能的选择
+            # 穷举所有可能的选择,这里floor 不能从0 开始，如果n是0，就return 0
             for i in range(1, N + 1):
                 res = min(res, max(dp(K, N - i), dp(K - 1, i - 1)) + 1 ) # “+1” 表示当前这次操作
             # 记入备忘录

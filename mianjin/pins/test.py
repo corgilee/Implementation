@@ -1,43 +1,40 @@
-class Solution:
-    def minimizeResult(self, expression: str) -> str:
-        '''
-        根据题目直接解
-        把两个数字parse出来，然后遍历进行分析
-        遍历的时候要注意 边界条件
-        '''
-        new_exp=expression.split("+")
-        num1=new_exp[0] #str
-        num2=new_exp[1] #str
-        #print(num1,num2)
-        n1=len(num1)
-        n2=len(num2) 
 
-        res=float(inf)
-        for i in range(-1,n1-1):
-            #左括号必须包进去一个数字
-            for j in range(n2):
-                #右括号必须包进去一个数字
-                # 这里的 i,j 是cut的index,所以要用+1
-                n11=num1[:i+1]
-                n12=num1[i+1:]
-                if len(n11)==0:
-                    first=1
-                else:
-                    first=int(n11)
-                
-                n21=num2[:j+1]
-                n22=num2[j+1:]
-                if len(n22)==0:
-                    fourth=1
-                else:
-                    fourth=int(n22)
-                
-                #print(n11,n12,n21,n22)             
-                c=first*(int(n12)+int(n21))*fourth
-                if c<res:
-                    res=c
-                    output=n11+"("+n12+"+"+n21+")"+n22
-                    # print(c,output)
-                    # print(n11,n12,n21,n22)
-                    
-        return output
+pins=[(1, 4, 'L'), (2, 3, 'R'), (4, 8, 'R'), (6, 10, 'L')] 
+screen=5
+#Expected: 2 Output: 2
+
+
+pins=[(1, 3, 'L'), (2, 4, 'R'), (3, 6, 'L'), (4, 7, 'R'), (6, 9, 'L')] 
+screen= 5
+#Expected: 3 Output: 3
+
+
+'''
+add all pins into a list and sort by end time
+
+use a heap list to save the pins in the same screen
+iterate through each pins and first check if this pin can fit
+into the screen, if so, push into the list, use this pin as standard and remove any pins that has start
+less then this start
+'''
+import heapq
+
+def max_pins(pins,screen):
+    #sort by end time
+    pins.sort(key=lambda x:x[1])
+    res=0
+    h=[]
+    for pin in pins:
+        start_cut=pin[1]-screen
+        print(start_cut)
+
+        if pin[0]>=start_cut:
+            heapq.heappush(h,pin[0])
+        while h[0]<start_cut:
+            heapq.heappop(h)
+        res=max(res,len(h))
+
+    return res
+
+print(max_pins(pins,screen))
+
