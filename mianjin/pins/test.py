@@ -1,40 +1,45 @@
+'''
+# 4 种 feature， 每个feature，3种choice
 
-pins=[(1, 4, 'L'), (2, 3, 'R'), (4, 8, 'R'), (6, 10, 'L')] 
-screen=5
-#Expected: 2 Output: 2
-
-
-pins=[(1, 3, 'L'), (2, 4, 'R'), (3, 6, 'L'), (4, 7, 'R'), (6, 9, 'L')] 
-screen= 5
-#Expected: 3 Output: 3
-
+1. Define card representation (Tuple, etc) and a function to generate a random card
+2. Generate n random cards
+3. Generate n unique random cards
+4. Generate a bunch of random lists of 3 cards, check if they are sets
+5. Generate 12 unique random cards, and find all valid sets, and make more efficient
 
 '''
-add all pins into a list and sort by end time
+import numpy as np
+def gen_rd_card():
+    new=np.random.choice([1,2,3],4)
+    return tuple(new)
 
-use a heap list to save the pins in the same screen
-iterate through each pins and first check if this pin can fit
-into the screen, if so, push into the list, use this pin as standard and remove any pins that has start
-less then this start
-'''
-import heapq
+print(gen_rd_card())
 
-def max_pins(pins,screen):
-    #sort by end time
-    pins.sort(key=lambda x:x[1])
-    res=0
-    h=[]
-    for pin in pins:
-        start_cut=pin[1]-screen
-        print(start_cut)
-
-        if pin[0]>=start_cut:
-            heapq.heappush(h,pin[0])
-        while h[0]<start_cut:
-            heapq.heappop(h)
-        res=max(res,len(h))
-
+def gen_n_cards(n):
+    res=[]
+    for _ in range(n):
+        new=gen_rd_card()
+        #print(new)
+        res.append(new)
     return res
 
-print(max_pins(pins,screen))
+
+
+def gen_unique_n_cards(n):
+    res=[]
+    for _ in range(n):
+        new=gen_rd_card()
+        print(new)
+        if new in res:
+            continue
+        res.append(new)
+        print(res)
+    return res
+
+res=gen_unique_n_cards(3)
+print(res)
+
+
+
+
 
