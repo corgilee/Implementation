@@ -1,0 +1,6 @@
+{"user_id": "user_1", "timestamp": "2025-03-16T12:00:00Z", "recipient": "user_2"}
+{"user_id": "user_1", "timestamp": "2025-03-16T12:15:00Z", "recipient": "user_3"}
+{"user_id": "user_1", "timestamp": "2025-03-16T12:40:00Z", "recipient": "user_2"}
+{"user_id": "user_2", "timestamp": "2025-03-16T13:00:00Z", "recipient": "user_3"}
+{"user_id": "user_2", "timestamp": "2025-03-16T13:10:00Z", "recipient": "user_3"}
+{"user_id": "user_2", "timestamp": "2025-03-16T14:00:00Z", "recipient": "user_4"}
