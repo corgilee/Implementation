@@ -9,7 +9,7 @@ Time: O(N log N) where N is number of tasks
 from collections import Counter, deque
 import heapq
 
-def leastInterval(self, tasks: List[str], n: int) -> int:
+def leastInterval(tasks, n):
         # Step 1: Count frequency of each task
         counter = Counter(tasks)
         
