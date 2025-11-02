@@ -20,14 +20,19 @@ def pairwise_logistic_loss(pos_scores: torch.Tensor,
     return loss.mean() if reduction == "mean" else loss.sum()
 
 
-# B, K = 4, 3
+B, K = 4, 3
 # pos = torch.tensor([2.0, 1.2, 0.5, 3.0])        # 正样本分数 [B]
 # negs = torch.tensor([[1.5, 0.2, -0.4],          # 负样本分数 [B, K]
 #                      [0.9, 0.7,  0.1],
 #                      [0.6, 0.4, -0.1],
 #                      [2.2, 1.0,  0.0]])
 
-# 
+# base random uniform in [0,1]
+pos  = torch.rand(B) * 0.5 + 0.5      # [0.5 ~ 1.0]
+negs = torch.rand(B, K) * 0.5         # [0.0 ~ 0.5]
+
+print(pos)
+print(negs)
 
 #print("hinge  :", pairwise_hinge_loss(pos, negs, margin=1.0).item())
 print("bpr    :", pairwise_logistic_loss(pos, negs).item())
