@@ -3,7 +3,10 @@
 1. implement a retrival algorithm for user_query search
 2. implement a loss function for ranking
 
+
+
 '''
+import torch
 
 
 # ##########################
@@ -42,19 +45,25 @@ def retrieve_candidates(query, documents,k=2):
     return res
     
 
+# from sentence_transformers import SentenceTransformer, util
+
+# # load model once (outside function)
+# embed_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+# def retrieve_candidates_embedding(query, documents, k=2):
+#     # embed
+#     q_emb  = embed_model.encode([query])
+#     d_embs = embed_model.encode(documents)
+
+#     # cosine similarity [1, len(documents)]
+#     scores = util.cos_sim(q_emb, d_embs).squeeze(0)   # -> tensor [D]
+
+#     # topk
+#     topk = torch.topk(scores, k).indices.tolist()
+#     return topk
 
 # # retrieval step
 cands = retrieve_candidates(query, documents, k=2)
 
 print(cands)
 
-# # suppose index0 is positive, index1 is negative
-# pos = cands[0]
-# neg = cands[1]
-
-# pos_s = score(query, pos)
-# neg_s = score(query, neg)
-
-# print("pos:", pos, pos_s)
-# print("neg:", neg, neg_s)
-# print("loss:", ranking_loss(pos_s, neg_s))
