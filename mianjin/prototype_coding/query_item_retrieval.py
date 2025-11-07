@@ -7,6 +7,7 @@
 
 '''
 import torch
+import torch.nn.functional as F
 
 
 # ##########################
@@ -26,7 +27,8 @@ documents = [
 # for index,val in enumerate(documents):
 #     print(f"index:{index}, val:{val}")
 
-# retrieval methodology , 1. overlapped_token 2. calculated embedding
+# retrieval methodology , 
+# 1. overlapped_token 2. calculated embedding
 def retrieve_candidates(query, documents,k=2):
     # count the overlapped tokens to count
     query_token=set(query.lower().split())
@@ -45,25 +47,34 @@ def retrieve_candidates(query, documents,k=2):
     return res
     
 
-# from sentence_transformers import SentenceTransformer, util
+# #################################
+# # embedding-based retrieval demo
+# #################################
 
-# # load model once (outside function)
-# embed_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+import torch.nn.functional as F
 
-# def retrieve_candidates_embedding(query, documents, k=2):
-#     # embed
-#     q_emb  = embed_model.encode([query])
-#     d_embs = embed_model.encode(documents)
+torch.manual_seed(0)
+EMB_DIM = 8
 
-#     # cosine similarity [1, len(documents)]
-#     scores = util.cos_sim(q_emb, d_embs).squeeze(0)   # -> tensor [D]
+# pretend we already have embeddings for the query/documents
+query_embedding = torch.randn(EMB_DIM)
+document_embeddings = torch.randn(len(documents), EMB_DIM)
 
-#     # topk
-#     topk = torch.topk(scores, k).indices.tolist()
-#     return topk
+
+def retrieve_candidates_embedding(query_emb: torch.Tensor,
+                                  doc_embs: torch.Tensor,
+                                  k: int = 2):
+    """Return top-k document indices by cosine similarity."""
+    query_emb = F.normalize(query_emb, dim=0)
+    doc_embs = F.normalize(doc_embs, dim=1)
+
+    scores = torch.matmul(doc_embs, query_emb)  # cosine similarity because vectors normalized
+    topk = torch.topk(scores, k).indices.tolist()
+    return topk
 
 # # retrieval step
 cands = retrieve_candidates(query, documents, k=2)
+embedding_cands = retrieve_candidates_embedding(query_embedding, document_embeddings, k=2)
 
-print(cands)
-
+print("token overlap:", cands)
+print("embedding    :", embedding_cands)
