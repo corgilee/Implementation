@@ -2,9 +2,10 @@ import random
 
 def reservoir_sample(stream):
     chosen = None
+    # 1 是starting index
     for i, x in enumerate(stream, 1):
         # 以 1/i 的概率选择当前元素
-        if random.random() < 1 / i:
+        if random.random() <= 1 / i:
             chosen = x
     return chosen
 
