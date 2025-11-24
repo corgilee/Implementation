@@ -5,7 +5,10 @@ import pandas as pd
 import csv 
 data = pd.read_csv("faire-ml-rank-small.csv") 
 data.shape
-data.columns.tolist() 
+
+# Get a summary of the DataFrame including data types, non-null values, and memory usage
+data.info()
+#data.columns.tolist() 
 
 print("--- Target Variable Distribution ('has_product_click') ---") 
 click_counts = data['has_product_click'].value_counts() 
@@ -14,27 +17,36 @@ print(f"Click rate: {click_counts[1] / len(data) * 100 : .2f}%")
 
 
 #Feature Engineering: Encoding and Missing Value Imputation
-print("--- Object Type Categorical Features ---") 
-object_cols = data.select_dtypes(include='object') 
-for col in object_cols.columns: 
-    not_null_count = data[col].count() 
-    unique_count = data[col].nunique() 
-    print(f"'{col}': {not_null_count : <14} | {unique_count : <13} unique values")
 
 # --- Numerical Missing Value Imputation ---
 numerical_cols = data.select_dtypes(include=['float64', 'int64']).columns 
 num_cols_with_missing = [col for col in numerical_cols if data[col].isnull().sum() > 0] 
+# 先print 看看
+print(num_cols_with_missing)
+
 high_missing_threshold = 0.75 
 for col in num_cols_with_missing: 
     missing_rate = data[col].isnull().mean() 
     if missing_rate > high_missing_threshold: 
         # Strategy: Binary Indicator + Fill with 0
+        '''
+        The core reason for using this strategy is to preserve the predictive information contained in both the value of the feature (when present) and the fact that it was missing (when absent).
+        '''
+        
         data[f'{col}_is_known'] = data[col].notnull().astype(int) 
         data[col] = data[col].fillna(0) 
     else: 
         # Strategy: Median Imputation
         median_val = data[col].median() 
         data[col] = data[col].fillna(median_val)
+
+
+print("--- Object Type Categorical Features ---") 
+object_cols = data.select_dtypes(include='object') 
+for col in object_cols.columns: 
+    not_null_count = data[col].count() 
+    unique_count = data[col].nunique() 
+    print(f"'{col}': {not_null_count : <14} | {unique_count : <13} unique values")
 
 
 # xgboost
