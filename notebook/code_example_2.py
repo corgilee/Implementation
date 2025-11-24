@@ -232,4 +232,21 @@ final_auc = roc_auc_score(y_val, y_pred_proba_val)
 print(f"Validation ROC AUC (Best Model): {final_auc : .4f}")
 
 
+### target encoding
+### Optional
+# === 2. Non-Leaky Target Encoding (TE) for "query_text" ===
+
+# 1. 计算全局平均点击率 (仅使用训练集 y_train)
+global_mean = y_train.mean()
+
+# 2. 计算 TE Map (仅使用训练集 X_train 和 y_train)
+# 将 X_train 和 y_train 合并，计算每个 query_text 的平均点击率
+te_mapping = pd.Series(y_train.values, index=X_train['query_text']).groupby(level=0).mean()
+
+X_train['query_text_te'] = X_train['query_text'].map(te_mapping).fillna(global_mean)
+X_val['query_text_te'] = X_val['query_text'].map(te_mapping).fillna(global_mean)
+
+print("--- Target Encoding Complete (Non-Leaky) ---")
+
+
 
