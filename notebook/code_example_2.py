@@ -175,6 +175,61 @@ current_date = data['created_at_dt'].max()
 data['days_since_created'] = (current_date - data['created_at_dt']).dt.days
 
 
+### grid search if necessary
+# Define the parameter grid to search
+
+from sklearn.model_selection import GridSearchCV
+from xgboost import XGBClassifier
+from sklearn.metrics import roc_auc_score
+import time # Optional: to track how long the search takes
+
+param_grid = {
+    'max_depth': [3, 4, 5], 
+    'learning_rate': [0.05, 0.1, 0.2], 
+    'n_estimators': [100, 200, 300], # Number of boosting rounds
+    'reg_alpha': [0.0, 0.05, 0.1],   # L1 regularization
+    'reg_lambda': [1, 5, 10]        # L2 regularization
+}
+
+# The total number of runs will be 3 * 3 * 3 * 3 * 3 = 243 models * CV folds
+print(f"Total models to train: {3*3*3*3*3} * CV folds")
+
+xgb_model = XGBClassifier(
+    objective='binary:logistic',
+    use_label_encoder=False,
+    eval_metric='logloss',
+    seed=42,
+    # Add scale_pos_weight if you want to explicitly handle the 4.2% click rate
+    # scale_pos_weight= (len(y_train) - y_train.sum()) / y_train.sum()
+)
+
+# Initialize the GridSearchCV object
+grid_search = GridSearchCV(
+    estimator=xgb_model,
+    param_grid=param_grid,
+    scoring='roc_auc', # Metric to optimize
+    cv=3,              # 3-fold cross-validation
+    verbose=1,         # Print progress
+    n_jobs=-1          # Use all available CPU cores
+)
+
+# Run the search (this may take a long time!)
+print("\nStarting Grid Search...")
+start_time = time.time()
+grid_search.fit(X_train, y_train)
+end_time = time.time()
+print(f"Grid Search Complete in {end_time - start_time : .2f} seconds.")
+
+# --- Results ---
+print("\n## Grid Search Results ##")
+print(f"Best parameters found: {grid_search.best_params_}")
+print(f"Best cross-validation ROC AUC: {grid_search.best_score_ : .4f}")
+
+# Final validation on the held-out set
+best_model = grid_search.best_estimator_
+y_pred_proba_val = best_model.predict_proba(X_val)[:, 1]
+final_auc = roc_auc_score(y_val, y_pred_proba_val)
+print(f"Validation ROC AUC (Best Model): {final_auc : .4f}")
 
 
 
