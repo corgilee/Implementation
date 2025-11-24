@@ -15,7 +15,6 @@ click_counts = data['has_product_click'].value_counts()
 print(click_counts) 
 print(f"Click rate: {click_counts[1] / len(data) * 100 : .2f}%") 
 
-
 #Feature Engineering: Encoding and Missing Value Imputation
 
 # --- Numerical Missing Value Imputation ---
@@ -51,7 +50,6 @@ for col in object_cols.columns:
 
 
 # xgboost
-
 from sklearn.model_selection import train_test_split 
 import xgboost as xgb 
 from sklearn.metrics import roc_auc_score
@@ -69,16 +67,13 @@ X_numeric = data[numerical_features]
 data['fillter_string_id'] = data['filter_string'].factorize()[0]
 
 filter_dummies = pd.get_dummies(data['fillter_string_id'], prefix='filter_string') 
-
 X = pd.concat([X_numeric, filter_dummies], axis=1)
-
 
 # === 2. Split Data (Train / Validation) ===
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y) 
 
 
 import xgboost as xgb
-
 # --- 1. 准备 DMatrix ---
 # 原生 XGBoost 训练需要 DMatrix 格式的数据
 # 假设 X_train, y_train, X_val, y_val 已经定义
@@ -107,7 +102,6 @@ model= xgb.train(
 )
 
 ## next version
-
 params = { 
     'objective': 'binary:logistic', 
     'eval_metric': 'logloss', 
