@@ -30,7 +30,8 @@ for col in num_cols_with_missing:
     if missing_rate > high_missing_threshold: 
         # Strategy: Binary Indicator + Fill with 0
         '''
-        The core reason for using this strategy is to preserve the predictive information contained in both the value of the feature (when present) and the fact that it was missing (when absent).
+        The core reason for using this strategy is to preserve the predictive information 
+        contained in both the value of the feature (when present) and the fact that it was missing (when absent).
         '''
         
         data[f'{col}_is_known'] = data[col].notnull().astype(int) 
