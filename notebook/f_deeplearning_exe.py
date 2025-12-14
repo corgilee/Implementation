@@ -50,6 +50,7 @@ X_test  = imputer.transform(X_test)
 
 print('x_train shape',X_train.shape)
 
+#scaling
 # 可选：如果你确认这些都是连续数值才 scaler
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
@@ -58,6 +59,7 @@ X_test  = scaler.transform(X_test)
 # to torch
 X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
 X_test_tensor  = torch.tensor(X_test, dtype=torch.float32)
+print('x_train_shape',X_train_tensor.shape)
 
 y_train_tensor = torch.tensor(y_train.to_numpy(), dtype=torch.float32).view(-1, 1) #reshapes a tensor so it has exactly one column
 print('y_train_shape',y_train.shape,y_train.to_numpy().shape, y_train_tensor.shape)
@@ -95,6 +97,7 @@ class NN(nn.Module):
         return self.layers(x)
     
 
+### model setup
 model = NN(X_train_tensor.shape[1])
 criterion = torch.nn.BCEWithLogitsLoss()
 
@@ -114,18 +117,20 @@ for epoch in range(epochs):
     model.train()
     epoch_loss = 0.0
 
+
     for data, target in train_loader:
+        #Think “Clear → Predict → Compare → Backprop → Update.”
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
         loss.backward()
-        optimizer.step()
+        optimizer.step() # update weights
         ### loss.item(), converts the scalar loss tensor for the current batch into a plain Python float (e.g., 0.1234)
         epoch_loss += loss.item() * len(data)
 
     avg_train_loss = epoch_loss / len(train_loader.dataset)
 
-    model.eval()
+    model.eval() # eval mode
     
     with torch.no_grad():
         train_logits = model(X_train_tensor)
