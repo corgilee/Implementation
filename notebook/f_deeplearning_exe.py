@@ -11,37 +11,37 @@ data = pd.read_csv("faire-ml-rank-small.csv")
 data.shape
 
 print('data.info')
-#print(data.info())
+print(data.info())
 
 num_features=data.select_dtypes(include=['float64', 'int64']).columns.tolist()
 #print('num_features: ', num_features)
 
 label = 'has_product_click'
+
 # postiive rate
 click_counts=data[label].value_counts()
 print('pos rate', click_counts[1]/len(data))
 
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
+#### missing rate ###
+numerical_cols = data.select_dtypes(include=['float64', 'int64']).columns 
+num_cols_with_missing = [col for col in numerical_cols if data[col].isnull().sum() > 0] 
+for col in num_cols_with_missing:
+    print('missing_rate: ', col, data[col].isnull().mean()) 
 
 
-
-
+# featrues
 features = [x for x in data.columns if x.startswith('retailerbrand') or x.startswith('product')]
 features=features+['position','page_number']
-#print('features', features)
-
-
-label = 'has_product_click'
 
 X = data[features].copy()
 y = data[label].copy()
 
+from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42,stratify=y)
 
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
 
 # impute (更标准)
 imputer = SimpleImputer(strategy="median")
@@ -102,6 +102,9 @@ criterion = torch.nn.BCEWithLogitsLoss()
 Weight decay is L2 regularization built into the optimizer: every update shrinks the parameters slightly toward zero, discouraging large weights.
 '''
 optimizer = optim.AdamW(model.parameters(),lr=1e-3,weight_decay=1e-3)
+
+
+from sklearn.metrics import roc_auc_score
 
 epochs = 20
 best_val_auc = float("-inf")
