@@ -38,7 +38,7 @@ X = data[features].copy()
 y = data[label].copy()
 
 from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42,stratify=y)
+X_train, x_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42,stratify=y)
 
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
@@ -46,7 +46,7 @@ from sklearn.preprocessing import StandardScaler
 # impute (更标准)
 imputer = SimpleImputer(strategy="median")
 X_train = imputer.fit_transform(X_train)
-X_test  = imputer.transform(X_test)
+x_val  = imputer.transform(x_val)
 
 print('x_train shape',X_train.shape)
 
@@ -54,16 +54,16 @@ print('x_train shape',X_train.shape)
 # 可选：如果你确认这些都是连续数值才 scaler
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
-X_test  = scaler.transform(X_test)
+x_val  = scaler.transform(x_val)
 
 # to torch
 X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
-X_test_tensor  = torch.tensor(X_test, dtype=torch.float32)
+x_val_tensor  = torch.tensor(x_val, dtype=torch.float32)
 print('x_train_shape',X_train_tensor.shape)
 
 y_train_tensor = torch.tensor(y_train.to_numpy(), dtype=torch.float32).view(-1, 1) #reshapes a tensor so it has exactly one column
 print('y_train_shape',y_train.shape,y_train.to_numpy().shape, y_train_tensor.shape)
-y_test_tensor  = torch.tensor(y_test.to_numpy(), dtype=torch.float32).view(-1, 1)
+y_val_tensor  = torch.tensor(y_val.to_numpy(), dtype=torch.float32).view(-1, 1)
 
 
 from torch.utils.data import TensorDataset, DataLoader
@@ -131,14 +131,14 @@ for epoch in range(epochs):
     avg_train_loss = epoch_loss / len(train_loader.dataset)
 
     model.eval() # eval mode
-    
+
     with torch.no_grad():
         train_logits = model(X_train_tensor)
         train_auc = roc_auc_score(y_train_tensor, train_logits)
 
     with torch.no_grad():
-        val_logits = model(X_test_tensor)
-        val_auc = roc_auc_score(y_test_tensor, val_logits)
+        val_logits = model(x_val_tensor)
+        val_auc = roc_auc_score(y_val_tensor, val_logits)
 
     print(f"Epoch {epoch+1}/{epochs}, Train Loss: {avg_train_loss:.4f}, Train AUC: {train_auc:.4f}, Val AUC: {val_auc:.4f}")
 
@@ -159,6 +159,6 @@ with torch.no_grad():
     print("Train AUC:", auc)
 
 with torch.no_grad():
-    y_pred = model(X_test_tensor)
-    auc = roc_auc_score(y_test_tensor, y_pred)
-    print("Test AUC:", auc)
+    y_pred = model(x_val_tensor)
+    auc = roc_auc_score(y_val_tensor, y_pred)
+    print("Val AUC:", auc)

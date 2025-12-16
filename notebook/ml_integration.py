@@ -37,20 +37,7 @@ cat_features=df.select_dtypes(object).columns.tolist()
 num_features = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
 
 
-#---plot --- 
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-sns.countplot(x='Category', hue='Target', data=df)
-plt.title('Count Plot of Categorical Feature by Binary Target')
-plt.xlabel('Category')
-plt.ylabel('Frequency')
-plt.legend(title='Target', loc='upper right')
-plt.show()
-
 # missing rate
-
-
 percent_missing = (df.isnull().sum()*100/len(df)).reset_index(name="missing_rate")\
       .query("missing_rate > 0")\
       .sort_values("missing_rate", ascending=False)\
@@ -65,7 +52,7 @@ miss_50_minus=percent_missing.loc[percent_missing.missing_rate<50,'columns'].to_
 df=df[miss_50_minus]
 
 ##### imputation
-#impute numerical variables with median
+#impute numerical variables with median, 也可以提一嘴，在split 之后做imputation 其实能更好的预防leakage
 for x in num_features:
     median_value=df[x].median()
     df[x]=df[x].fillna(median_value)
@@ -101,22 +88,21 @@ from sklearn.preprocessing import OneHotEncoder
 encoder = OneHotEncoder(sparse=False, drop=None)
 df_encoded = encoder.fit_transform(df[['Color']])
 
+### time transfer ###
+df["event_ts"] = pd.to_datetime(df["event_ts_str"],errors="coerce")
 
+### textual preprocessing ##
+## if lower case of the string constains a certain word like "exam"
+df["text_has_exam"] = (
+    df["text_column"].str.lower().str.contains("exam", na=False).astype(int)
+)
 
-#------tfidf ------------
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-# Initialize the TfidfVectorizer
-tfidf_vectorizer = TfidfVectorizer()
-
-# Fit and transform the training data
-tfidf_matrix = tfidf_vectorizer.fit_transform(df['review'])
-
-# Convert the TF-IDF matrix to a dense array for easier manipulation (optional)
-tfidf_matrix_dense = tfidf_matrix.toarray()
-
-# Get the feature names (words) from the vectorizer
-feature_names = tfidf_vectorizer.get_feature_names_out()
+## if col 1 (string format) are included in col 2 (string format)
+df["col1_in_col2"] = (
+    df.apply(lambda row: str(row["col1"]).lower() in str(row["col2"]).lower(),
+             axis=1)
+      .astype(int)
+)
 
 
 #scaling
@@ -127,12 +113,18 @@ scaler = StandardScaler()
 df_standardized = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
 
 
+
 ##Modeling
+x=df[num_features].drop(columns=['label'])
+y=df['label']
 #--- Split -----
 from sklearn.model_selection import train_test_split
 x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_state=78,stratify=y)
 
 # split by time
+cutoff = df["event_ts"].quantile(0.8)
+train = df[df["event_ts"] <= cutoff]
+val = df[df["event_ts"] > cutoff]
 
 
 ### if negative sample undersampling is needed
@@ -143,9 +135,15 @@ pos = train_df[train_df.y == 1]
 neg = train_df[train_df.y == 0].sample(n=len(pos) * 20, random_state=78)
 train_df_balanced = pd.concat([pos, neg])
 
-X_train_balanced = train_df_balanced.drop(columns=["y"])
+x_train_balanced = train_df_balanced.drop(columns=["y"])
 y_train_balanced = train_df_balanced["y"]
 ##########
+
+#### imputation ####
+from sklearn.impute import SimpleImputer
+imputer = SimpleImputer(strategy="median")
+x_train = imputer.fit_transform(x_train)
+x_val  = imputer.transform(x_val)
 
 
 # Training
@@ -161,19 +159,22 @@ reg_alpha=1.0,
 reg_lambda=5.0,
 '''
 
-
 lgb_model.fit(x_train.values,y_train,eval_set=[(x_val.values,y_val)],eval_metric='average_precision',
               categorical_feature=[23],callbacks=[lgb.early_stopping(10)])
 #eval_metrics: ['AUC','ndcg']
 
 # check performance 
-from sklearn.metrics import roc_auc_score,average_precision_score,f1_score,precision_score, recall_score
+from sklearn.metrics import roc_auc_score, average_precision_score, f1_score,precision_score, recall_score
 pred_train=lgb_model.predict_proba(x_train)[:,1]
 pred_test=lgb_model.predict_proba(x_val)[:,1]
 
 print(roc_auc_score(y_train,pred_train))
 print(average_precision_score(y_train,pred_train))
 
+
+### feature importance ###
+feat_imp = pd.Series(lgb_model.feature_importances_, index=x_train.columns)
+feat_imp.sort_values(ascending=False).head(20)
 
 # Gridsearch (optional)
 from sklearn.model_selection import GridSearchCV
@@ -185,12 +186,11 @@ param_grid = {
 
 # Set up GridSearchCV
 grid_search = GridSearchCV(estimator=lgb_model, param_grid=param_grid, scoring='average_precision', cv=3, verbose=1)
-
-
 # Perform grid search
 grid_search.fit(x_train.values, y_train)
 best_model=grid_search.best_estimator_ #show the best parameter of gridsearch
 pred_test=best_model.predict_proba(x_val)[:,1]
+
 
 # find the best threshold for f1 score
 thresholds = np.linspace(0, 1, 50)
@@ -221,52 +221,120 @@ print(recall_score(y_val, pred_test > selected_threshold))
 print(f1_score(y_val, pred_test > selected_threshold))
 
 
-##----- MLP --------
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, TensorDataset
+##### MLP ####
+from sklearn.model_selection import train_test_split
+x_train, x_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42,stratify=y)
 
-x_train, x_val = torch.tensor(x_train, dtype=torch.float32), torch.tensor(x_val, dtype=torch.float32)
-y_train, y_val = torch.tensor(y_train, dtype=torch.long), torch.tensor(y_val, dtype=torch.long)
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
 
-# Create data loaders
-train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=64, shuffle=True)
-test_loader = DataLoader(TensorDataset(x_val, y_val), batch_size=64, shuffle=False)
+# impute (更标准)
+imputer = SimpleImputer(strategy="median")
+x_train = imputer.fit_transform(x_train)
+x_val  = imputer.transform(x_val)
 
-class NeuralNetwork(nn.Module):
-    def __init__(self):
-        super(NeuralNetwork, self).__init__()
+print('x_train shape',x_train.shape)
+
+#scaling
+# 可选：如果你确认这些都是连续数值才 scaler
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_val  = scaler.transform(x_val)
+
+# to torch
+x_train_tensor = torch.tensor(x_train, dtype=torch.float32)
+x_val_tensor  = torch.tensor(x_val, dtype=torch.float32)
+print('x_train_shape',x_train_tensor.shape)
+
+y_train_tensor = torch.tensor(y_train.to_numpy(), dtype=torch.float32).view(-1, 1) #reshapes a tensor so it has exactly one column
+print('y_train_shape',y_train.shape,y_train.to_numpy().shape, y_train_tensor.shape)
+y_val_tensor  = torch.tensor(y_val.to_numpy(), dtype=torch.float32).view(-1, 1)
+
+
+from torch.utils.data import TensorDataset, DataLoader
+
+train_dataset = TensorDataset(x_train_tensor, y_train_tensor)
+train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
+
+# Compact MLP with additional dropout to limit overfitting on 36-dim inputs
+class NN(nn.Module):
+    def __init__(self, n_features):
+        super(NN, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(n_features + n_categories, 128),
+            nn.Linear(n_features, 64),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
+            nn.Dropout(0.1),
+
             nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Linear(32, 1),  # Output layer for binary classification with a single output neuron
-            nn.Sigmoid()       # Sigmoid activation function for the final output
+            nn.Dropout(0.1),
+
+            nn.Linear(32, 16),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+
+            nn.Linear(16, 1),
         )
 
     def forward(self, x):
         return self.layers(x)
+    
+
+### model setup
+model = NN(x_train_tensor.shape[1])
+criterion = torch.nn.BCEWithLogitsLoss()
+
+'''
+Weight decay is L2 regularization built into the optimizer: every update shrinks the parameters slightly toward zero, discouraging large weights.
+'''
+optimizer = optim.AdamW(model.parameters(),lr=1e-3,weight_decay=1e-3)
 
 
-model = NeuralNetwork()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.AdamW(model.parameters(), lr=0.001)
+from sklearn.metrics import roc_auc_score
 
-def train_model(num_epochs, model, loaders):
-    for epoch in range(num_epochs):
-        model.train()
-        for X_batch, y_batch in loaders['train']:
-            optimizer.zero_grad()
-            outputs = model(X_batch)
-            loss = criterion(outputs, y_batch)
-            loss.backward()
-            optimizer.step()
-        print(f'Epoch {epoch+1}, Loss: {loss.item()}')
+epochs = 20
+best_val_auc = float("-inf")
+best_state = None
 
-# Train the model
-train_model(10, model, {'train': train_loader})
+for epoch in range(epochs):
+    model.train()
+    epoch_loss = 0.0
+
+
+    for data, target in train_loader:
+        #Think “Clear → Predict → Compare → Backprop → Update.”
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step() # update weights
+        ### loss.item(), converts the scalar loss tensor for the current batch into a plain Python float (e.g., 0.1234)
+        epoch_loss += loss.item() * len(data)
+
+    avg_train_loss = epoch_loss / len(train_loader.dataset)
+
+    model.eval() # eval mode
+
+    with torch.no_grad():
+        train_logits = model(x_train_tensor)
+        train_auc = roc_auc_score(y_train_tensor, train_logits)
+
+    with torch.no_grad():
+        val_logits = model(x_val_tensor)
+        val_auc = roc_auc_score(y_val_tensor, val_logits)
+
+    print(f"Epoch {epoch+1}/{epochs}, Train Loss: {avg_train_loss:.4f}, Train AUC: {train_auc:.4f}, Val AUC: {val_auc:.4f}")
+
+
+with torch.no_grad():
+    y_pred = model(x_train_tensor) # output shape [rows,1 ]
+    auc = roc_auc_score(y_train_tensor, y_pred)
+    print("Train AUC:", auc)
+
+with torch.no_grad():
+    y_pred = model(x_val_tensor)
+    auc = roc_auc_score(y_val_tensor, y_pred)
+    print("Val AUC:", auc)
