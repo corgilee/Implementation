@@ -223,6 +223,10 @@ print(f1_score(y_val, pred_test > selected_threshold))
 
 
 ##### MLP ####
+
+X = df[features].copy()
+y = df[label].copy()
+
 from sklearn.model_selection import train_test_split
 x_train, x_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42,stratify=y)
 
