@@ -190,7 +190,6 @@ print(f"Total models to train: {3*3*3*3*3} * CV folds")
 
 xgb_model = XGBClassifier(
     objective='binary:logistic',
-    use_label_encoder=False,
     eval_metric='logloss',
     seed=42,
     # Add scale_pos_weight if you want to explicitly handle the 4.2% click rate
@@ -207,6 +206,7 @@ grid_search = GridSearchCV(
     n_jobs=-1          # Use all available CPU cores
 )
 
+'''
 # Run the search (this may take a long time!)
 print("\nStarting Grid Search...")
 start_time = time.time()
@@ -224,6 +224,8 @@ best_model = grid_search.best_estimator_
 y_pred_proba_val = best_model.predict_proba(X_val)[:, 1]
 final_auc = roc_auc_score(y_val, y_pred_proba_val)
 print(f"Validation ROC AUC (Best Model): {final_auc : .4f}")
+'''
+
 
 
 ### target encoding
@@ -235,12 +237,16 @@ global_mean = y_train.mean()
 
 # 2. 计算 TE Map (仅使用训练集 X_train 和 y_train)
 # 将 X_train 和 y_train 合并，计算每个 query_text 的平均点击率
+'''
+
 te_mapping = pd.Series(y_train.values, index=X_train['query_text']).groupby(level=0).mean()
 
 X_train['query_text_te'] = X_train['query_text'].map(te_mapping).fillna(global_mean)
 X_val['query_text_te'] = X_val['query_text'].map(te_mapping).fillna(global_mean)
 
 print("--- Target Encoding Complete (Non-Leaky) ---")
+
+'''
 
 
 

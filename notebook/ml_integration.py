@@ -34,9 +34,7 @@ data.dtypes.value_counts()
 # category/numerical
 cat_features=df.select_dtypes(object).columns.tolist()
 
-feature1=df.select_dtypes('float64').columns.tolist()
-feature2=df.select_dtypes(int).columns.tolist()
-num_features=feature1+feature2
+num_features = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
 
 
 #---plot --- 
@@ -52,10 +50,12 @@ plt.show()
 
 # missing rate
 
-percent_missing = \
-pd.DataFrame(df.isnull().sum() * 100 / len(df)).reset_index()
 
-percent_missing.columns=['columns','missing_rate']
+percent_missing = (df.isnull().sum()*100/len(df)).reset_index(name="missing_rate")\
+      .query("missing_rate > 0")\
+      .sort_values("missing_rate", ascending=False)\
+      .reset_index(drop=True)
+
 
 #check the ratio of 50+ missing
 sum(percent_missing['missing_rate']>=50)/percent_missing.shape[0]
@@ -93,7 +93,8 @@ df['query_text_encoding']=df['query_text'].map(query_mean_dict)
 # option3, 用pd.get_dummies
 categorical_vars = ['home_ownership']
 df = pd.get_dummies(df, columns=categorical_vars, drop_first=True)
-new_categorical_vars=df.select_dtypes('object').columns.tolist()
+# how to pick the newly generated column
+new_dummy_cols = [c for c in df.columns if c not in cols_before]
 
 #option 4: one hot encoder (比较麻烦)
 from sklearn.preprocessing import OneHotEncoder
@@ -129,15 +130,37 @@ df_standardized = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
 ##Modeling
 #--- Split -----
 from sklearn.model_selection import train_test_split
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=78)
-# validation data 也要分一下
-x_train,x_val,y_train,y_val=train_test_split(x_train,y_train,test_size=0.2,random_state=78)
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_state=78,stratify=y)
+
+# split by time
+
+
+### if negative sample undersampling is needed
+train_df = x_train.copy()
+train_df["y"] = y_train
+
+pos = train_df[train_df.y == 1]
+neg = train_df[train_df.y == 0].sample(n=len(pos) * 20, random_state=78)
+train_df_balanced = pd.concat([pos, neg])
+
+X_train_balanced = train_df_balanced.drop(columns=["y"])
+y_train_balanced = train_df_balanced["y"]
+##########
+
 
 # Training
 import lightgbm as lgb
 
 lgb_model = lgb.LGBMClassifier(n_estimators=100,
-,max_depth=3,random_state=78,verbose=-1,subsample=0.8,colsample_bytree=0.8,min_child_samples=5)
+max_depth=3,random_state=78,verbose=-1,subsample=0.8,colsample_bytree=0.8,min_child_samples=5)
+
+## more regularization
+'''
+min_child_samples=50,
+reg_alpha=1.0, 
+reg_lambda=5.0,
+'''
+
 
 lgb_model.fit(x_train.values,y_train,eval_set=[(x_val.values,y_val)],eval_metric='average_precision',
               categorical_feature=[23],callbacks=[lgb.early_stopping(10)])
@@ -146,7 +169,7 @@ lgb_model.fit(x_train.values,y_train,eval_set=[(x_val.values,y_val)],eval_metric
 # check performance 
 from sklearn.metrics import roc_auc_score,average_precision_score,f1_score,precision_score, recall_score
 pred_train=lgb_model.predict_proba(x_train)[:,1]
-pred_test=lgb_model.predict_proba(x_test)[:,1]
+pred_test=lgb_model.predict_proba(x_val)[:,1]
 
 print(roc_auc_score(y_train,pred_train))
 print(average_precision_score(y_train,pred_train))
@@ -167,7 +190,7 @@ grid_search = GridSearchCV(estimator=lgb_model, param_grid=param_grid, scoring='
 # Perform grid search
 grid_search.fit(x_train.values, y_train)
 best_model=grid_search.best_estimator_ #show the best parameter of gridsearch
-pred_test=best_model.predict_proba(x_test)[:,1]
+pred_test=best_model.predict_proba(x_val)[:,1]
 
 # find the best threshold for f1 score
 thresholds = np.linspace(0, 1, 50)
@@ -193,9 +216,9 @@ print(f1_score(y_train, pred_train > selected_threshold))
 
 
 ### precision, recall, f1 in testing
-print(precision_score(y_test, pred_test > selected_threshold))
-print(recall_score(y_test, pred_test > selected_threshold))
-print(f1_score(y_test, pred_test > selected_threshold))
+print(precision_score(y_val, pred_test > selected_threshold))
+print(recall_score(y_val, pred_test > selected_threshold))
+print(f1_score(y_val, pred_test > selected_threshold))
 
 
 ##----- MLP --------
@@ -205,12 +228,12 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 
-X_train, X_test = torch.tensor(X_train, dtype=torch.float32), torch.tensor(X_test, dtype=torch.float32)
-y_train, y_test = torch.tensor(y_train, dtype=torch.long), torch.tensor(y_test, dtype=torch.long)
+x_train, x_val = torch.tensor(x_train, dtype=torch.float32), torch.tensor(x_val, dtype=torch.float32)
+y_train, y_val = torch.tensor(y_train, dtype=torch.long), torch.tensor(y_val, dtype=torch.long)
 
 # Create data loaders
 train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=64, shuffle=True)
-test_loader = DataLoader(TensorDataset(X_test, y_test), batch_size=64, shuffle=False)
+test_loader = DataLoader(TensorDataset(x_val, y_val), batch_size=64, shuffle=False)
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -232,7 +255,7 @@ class NeuralNetwork(nn.Module):
 
 model = NeuralNetwork()
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.AdamW(model.parameters(), lr=0.001)
 
 def train_model(num_epochs, model, loaders):
     for epoch in range(num_epochs):
