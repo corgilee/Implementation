@@ -2,7 +2,7 @@
 先把步骤讲出来，问问对方可不可以
 
 1. Data exploration
-    1. flag (positive rate, 一般可能是pos_rate 低的数据，后面要重点讨论 precision，recall，f1 score 和threshold，还有需不需要downsample）
+    1. flag (positive rate, 一般可能是pos_rate 低的数据，后面要重点讨论 precision，recall，f1 score 和threshold，还有需不需要）
     2. check_missing_rate (decide if some variables need to be dropped)
     3. data_type (numerical+categorical）
 2. Feature engineering

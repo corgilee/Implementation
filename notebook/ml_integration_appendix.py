@@ -75,3 +75,37 @@ def train_model(num_epochs, model, loaders):
 
 # Train the model
 train_model(10, model, {'train': train_loader})
+
+
+
+# increas the positive ratio to ~x% in x_train,if needed
+# ---- combine X + y for easy filtering ----
+train_df = x_train.copy()
+train_df["label"] = y_train.values
+
+# ---- split positives / negatives ----
+df_pos = train_df[train_df["label"] == 1]
+df_neg = train_df[train_df["label"] == 0]
+
+P = len(df_pos)
+N_neg_keep = P*30
+
+# ---- downsample negatives ----
+df_neg_down = df_neg.sample(n=N_neg_keep,replace=False)
+
+# ---- recombine & shuffle ----
+train_balanced = (
+    pd.concat([df_pos, df_neg_down], axis=0)
+      .sample(frac=1.0, random_state=42)
+      .reset_index(drop=True)
+)
+
+# ---- split back to X / y ----
+x_train_bal = train_balanced.drop(columns=["label"])
+y_train_bal = train_balanced["label"]
+
+print("Train positive rate:",
+      y_train_bal.mean() * 100)
+
+x_train=x_train_bal.copy()
+y_train=y_train_bal.copy()
