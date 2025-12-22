@@ -50,6 +50,25 @@ cat_cols=[]
 missing_cols=(df.isna().sum()*100/len(df)).reset_index(name="missing_rate").query("missing_rate>0").sort_values(by="missing_rate",ascending=False)
 #print(missing_cols)
 
+### optional 
+# columns with < 80% missing
+cols_keep = missing_cols.loc[
+    missing_cols["missing_rate"] < 80, "column"
+].tolist()
+
+# keep also columns with 0% missing
+cols_keep += [
+    c for c in df.columns
+    if c not in missing_cols["column"].tolist()
+]
+#####
+
+# optino 2: target encoding
+query_mean=pd.DataFrame(df.groupby(['query_text'])[label].mean()).reset_index()
+query_mean_dict=dict(zip(query_mean['query_text'],query_mean[label]))
+df['query_text_encoding']=df['query_text'].map(query_mean_dict)
+
+
 ### split ###
 from sklearn.model_selection import train_test_split
 
@@ -92,11 +111,6 @@ x_val= pd.get_dummies(x_val, columns=cat_cols, drop_first=False)
 # and missing ones are filled with zeros.
 x_val = x_val.reindex(columns=x_train.columns, fill_value=0)
 
-
-# optino 2: target encoding
-query_mean=pd.DataFrame(df.groupby(['query_text'])[label].mean()).reset_index()
-query_mean_dict=dict(zip(query_mean['query_text'],query_mean[label]))
-df['query_text_encoding']=df['query_text'].map(query_mean_dict)
 
 
 # clean the column name to avoid potential error, r"[ ... ]"
