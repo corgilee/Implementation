@@ -154,7 +154,7 @@ scale = neg / max(pos, 1)
 
 params = {
     'objective': 'binary:logistic',
-    'eval_metric': ['aucpr'],
+    'eval_metric': ['aucpr'], # ["aucpr", "auc", "logloss"]
     'eta': 0.03, # learning_rate
     'max_depth': 3,
     'min_child_weight': 5,
