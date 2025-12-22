@@ -92,6 +92,13 @@ x_val= pd.get_dummies(x_val, columns=cat_cols, drop_first=False)
 # and missing ones are filled with zeros.
 x_val = x_val.reindex(columns=x_train.columns, fill_value=0)
 
+
+# optino 2: target encoding
+query_mean=pd.DataFrame(df.groupby(['query_text'])[label].mean()).reset_index()
+query_mean_dict=dict(zip(query_mean['query_text'],query_mean[label]))
+df['query_text_encoding']=df['query_text'].map(query_mean_dict)
+
+
 # clean the column name to avoid potential error, r"[ ... ]"
 def clean_col_names(df):
     df.columns = df.columns.str.replace(
@@ -212,7 +219,21 @@ print('val precision ', precision_score(y_val, val_pred > selected_threshold))
 
 print('val f1', f1_score(y_val, val_pred > selected_threshold))
 
+### optinal calibration
 
+from sklearn.isotonic import IsotonicRegression
+
+# calibrate raw model scores so their average probability matches the true positive rate
+calibrator = IsotonicRegression(out_of_bounds='clip')
+calibrator.fit(val_pred, y_val)
+
+train_calibrated = calibrator.transform(train_pred)
+val_calibrated = calibrator.transform(val_pred)
+
+print('calibrated train pos rate', train_calibrated.mean())
+print('true train pos rate', y_train.mean())
+print('calibrated val pos rate', val_calibrated.mean())
+print('true val pos rate', y_val.mean())
 
 
 
