@@ -1,37 +1,33 @@
-def group_anomalies(anomaly_results, max_gap_minutes=60):
-    # Keep only anomalies
-    a = anomaly_results[anomaly_results["is_anomaly"] == 1].copy()
+def max_leaf_to_leaf_sum(root):
+    if not root:
+        return 0
 
-    # Sort by time
-    a = a.sort_values("timestamp")
+    best = float("-inf")
+    leaf_count = 0
 
-    # Previous anomaly timestamp
-    a["prev_timestamp"] = a["timestamp"].shift(1)
+    def dfs(node):
+        nonlocal best, leaf_count
+        if not node:
+            return None  # means "no path"
 
-    # Gap in minutes
-    a["gap_minutes"] = (a["timestamp"] - a["prev_timestamp"]).dt.total_seconds() / 60
+        # leaf
+        if not node.left and not node.right:
+            leaf_count += 1
+            return node.val
 
-    # New group if first anomaly or gap > 60 minutes
-    a["new_group"] = a["prev_timestamp"].isna() | (a["gap_minutes"] > max_gap_minutes)
+        left = dfs(node.left)
+        right = dfs(node.right)
 
-    # Group id (1, 2, 3, ...)
-    a["group_id"] = a["new_group"].cumsum()
+        # if both sides exist, we can form a leaf-to-leaf path through this node
+        if left is not None and right is not None:
+            best = max(best, left + node.val + right)
+            return node.val + max(left, right)
 
-    # Group-level summary
-    groups = (
-        a.groupby("group_id", as_index=False)
-         .agg(
-             start_time=("timestamp", "min"),
-             end_time=("timestamp", "max"),
-             peak_value=("value", "max"),
-             anomaly_count=("timestamp", "count"),
-         )
-    )
+        # otherwise only one side exists -> must go down that side
+        if left is not None:
+            return node.val + left
+        else:
+            return node.val + right  # right must exist here
 
-    # Duration in minutes
-    groups["duration_minutes"] = (
-        (groups["end_time"] - groups["start_time"]).dt.total_seconds() / 60
-    ).astype(int)
-
-    # Order columns as required
-    return groups[["group_id", "start_time", "end_time", "duration_minutes", "peak_value", "anomaly_count"]]
+    root_to_leaf = dfs(root)
+    return best if leaf_count >= 2 else root_to_leaf
