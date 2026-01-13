@@ -46,8 +46,47 @@ class Solution:
        2）要求打出path 两个followup都要求在原代码基础上改写，能跑
     '''
 
+##### only first follow up #####
 class Solution:
     def longestIncreasingPath(self, matrix: List[List[int]]) -> int:
+        if not matrix: return 0
+        m, n = len(matrix), len(matrix[0])
+        dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+        memo = {}
+        # 新增：用于在当前 DFS 路径中标记已访问，防止相等数值间的死循环
+        visited = set()
+
+        def dfs(i, j):
+            if (i, j) in memo:
+                return memo[(i, j)]
+            
+            max_len = 1
+            # 标记当前点正在被搜索
+            visited.add((i, j))
+            
+            for di, dj in dirs:
+                ii, jj = i + di, j + dj
+                # 修改点 1：条件改为 >= (非递减)
+                # 修改点 2：必须判断 (ii, jj) 不在当前路径的 visited 中
+                if 0 <= ii < m and 0 <= jj < n and (ii, jj) not in visited and matrix[ii][jj] >= matrix[i][j]:
+                    max_len = max(max_len, 1 + dfs(ii, jj))
+            
+            # 回溯：搜索完当前点的所有分支后，将其移出 visited
+            visited.remove((i, j))
+            
+            memo[(i, j)] = max_len
+            return max_len
+
+        ans = 0
+        for i in range(m):
+            for j in range(n):
+                ans = max(ans, dfs(i, j))
+        return ans
+
+
+##### 两个follow up 一起改
+class Solution:
+    def longestIncreasingPath(self) -> int:
         if not matrix: return 0
         m, n = len(matrix), len(matrix[0])
         dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]]
