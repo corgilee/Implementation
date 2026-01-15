@@ -1,9 +1,18 @@
 import math
 import numpy as np
 
+def softmax(x, axis=-1):
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
+
+
 def transformer_encoder_layer(X, W_Q, W_K, W_V, W_O, ffn, layer_norm, num_heads):
     """
     X: (n_tokens, d_model)
+    W_Q: (d_model, d_model)
+    W_K: (d_model, d_model)
+    W_V: (d_model, d_model)
+    W_O: (d_model, d_model)
     """
 
     # ---- Self-attention ----
@@ -23,7 +32,7 @@ def transformer_encoder_layer(X, W_Q, W_K, W_V, W_O, ffn, layer_norm, num_heads)
     head_outputs = []
 
     for Qi, Ki, Vi in zip(Q_heads, K_heads, V_heads):
-        scores = (Qi @ Ki.T) / math.sqrt(d_k)
+        scores = (Qi @ Ki.T) / math.sqrt(d_k) # matrix multiplication operator
         weights = softmax(scores)
         head_outputs.append(weights @ Vi)
 
