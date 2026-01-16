@@ -63,6 +63,7 @@ class EpsilonGreedy(Bandit):
 
         return best_arm
 
+#-----------------------------------------------------------------
 
 class UCB1(Bandit):
     def select(self):
@@ -83,7 +84,7 @@ class UCB1(Bandit):
 
         return best_arm
 
-
+#----------------------------------------------------------------
 
 class ThompsonBernoulli:
     def __init__(self, n_arms):
