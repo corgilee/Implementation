@@ -5,7 +5,10 @@
 
 '''
 This function implements golden-section search, a derivative-free optimization method for finding the minimum of a one-dimensional convex (unimodal) blackbox function within a closed interval [l,r]. 
-Since the function has only one basin, we can iteratively shrink the search interval by comparing function values at two interior points chosen using the golden ratio. This special ratio allows the algorithm to reuse one previous function evaluation each iteration, making it efficient when function evaluations are expensive. The process continues until the interval is sufficiently small, and the midpoint of the final interval is returned as the approximate minimizer.
+
+Since the function has only one basin, we can iteratively shrink the search interval by comparing function values at two interior points chosen using the golden ratio. 
+This special ratio allows the algorithm to reuse one previous function evaluation each iteration, making it efficient when function evaluations are expensive. 
+The process continues until the interval is sufficiently small, and the midpoint of the final interval is returned as the approximate minimizer.
 
 '''
 
