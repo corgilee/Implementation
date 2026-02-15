@@ -77,10 +77,10 @@ e.g.
  ["GOOG","50"]]
 '''
 
+
 import collections
 #千万不要用 float, 因为题目已经帮你设计好了,所有数字都乘了 100 存储
 def fraction(orders, inventory):
-
 
     res=[]
 
