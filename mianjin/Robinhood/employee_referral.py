@@ -57,7 +57,6 @@ def leaderboard(rh_users, new_users):
             continue
 
         parent[new] = ref
-        count.setdefault(new, 0)
 
         cur = ref
         while cur != SENTINEL:
