@@ -47,7 +47,7 @@ def dfs(i, amount, memo, b_vals, s_vals, counts):
     if i == len(b_vals):
         return amount  # leftover cash counts as value
 
-    key = (i, amount)
+    key = (i, amount) #If I am at stock i and have amount money left, what is the best possible result from here?
     if key in memo:
         return memo[key]
 
@@ -66,13 +66,13 @@ def dfs(i, amount, memo, b_vals, s_vals, counts):
 
 
 def optimize_portfolio_with_fractionals(amount, b_vals, s_vals, counts):
-    n = len(b_vals)
+
     assets = []
     for b, s, c in zip(b_vals, s_vals, counts):
         # skip non-profitable assets (they reduce value if cash is valued)
         if s <= b:
             continue
-        assets.append(((s - b) / b, b, s, c))  # profit density
+        assets.append(((s - b) / b, b, s, c))  # profit density, (单位收益率, 成本, 未来价值, 最大股数)
 
     assets.sort(key=lambda x: x[0], reverse=True)
 
