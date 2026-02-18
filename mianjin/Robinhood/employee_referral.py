@@ -70,7 +70,7 @@ def leaderboard(rh_users, new_users):
 
 
 
-####--------- test----------------
+###### test case #####################################################################
 def run_case(i, rh_users, new_users, expected):
     got = leaderboard(rh_users, new_users)  # <-- your function name here
     assert got == expected, (
