@@ -32,6 +32,22 @@ class LogisticRegression:
             pred=self.sigmoid(z)
 
             # Gradient calculations
+            # chain rule 推导（向量形式）：
+            # 1) z = Xw + b
+            # 2) a = sigmoid(z)
+            # 3) L = -(1/m) * sum(y*log(a) + (1-y)*log(1-a))
+            # chain rule 展开：
+            # dL/dw = dL/da * da/dz * dz/dw
+            # dL/db = dL/da * da/dz * dz/db
+
+            # dL/da = -(1/m) * (y/a - (1-y)/(1-a))
+            # da/dz = a*(1-a)
+            # => dL/dz = (1/m) * (a - y)   (化简后)
+
+            # dz/dw = X, dz/db = 1
+            # => dL/dw = (1/m) * X^T (a - y)
+            # => dL/db = (1/m) * sum(a - y)
+
             dw=(1/m)*np.dot(x.T,(pred-y)) # 注意这里是x.T
             db=(1/m)*np.sum(pred-y)
 
